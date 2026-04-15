@@ -48,32 +48,56 @@ export function OutputPanel({ output, status, liveMetrics, metricsHistory, onBac
 
 function AnalyzingView({ liveMetrics }: { liveMetrics: OutputPanelProps['liveMetrics'] }) {
   const [visibleLines, setVisibleLines] = useState<number>(0);
+  const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
     setVisibleLines(0);
-    const interval = setInterval(() => {
+    const lineInterval = setInterval(() => {
       setVisibleLines((prev) => prev >= ANALYZING_LINES.length ? prev : prev + 1);
     }, 800);
-    return () => clearInterval(interval);
+    const startTime = Date.now();
+    const timerInterval = setInterval(() => {
+      setElapsed((Date.now() - startTime) / 1000);
+    }, 100);
+    return () => { clearInterval(lineInterval); clearInterval(timerInterval); };
   }, []);
+
+  const displayElapsed = liveMetrics ? liveMetrics.elapsed : elapsed;
+  const displayTokens = liveMetrics ? liveMetrics.tokenCount : 0;
+  const displaySpeed = liveMetrics ? liveMetrics.tokensPerSec : 0;
 
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-2">
       <div className="border-2 border-black bg-white w-full max-w-4xl">
         <div className="grid grid-cols-1 md:grid-cols-2">
           <div className="p-6 md:p-10 flex flex-col justify-center border-b-2 md:border-b-0 md:border-r-2 border-black">
-            <div className="flex items-center gap-3 mb-6 md:mb-8">
+            <div className="flex items-center gap-3 mb-4 md:mb-6">
               <div className="w-4 h-4 md:w-5 md:h-5 bg-[#ff6600] rounded-full animate-pulse-dot" />
               <span className="text-3xl md:text-5xl font-bold uppercase tracking-tight">ANALYZING</span>
             </div>
-            {liveMetrics && (
-              <div className="space-y-2 font-mono text-xs text-gray-500">
-                <div>Tokens: {liveMetrics.tokenCount}</div>
-                <div>Speed: {liveMetrics.tokensPerSec.toFixed(1)} tok/s</div>
-                <div>Elapsed: {liveMetrics.elapsed.toFixed(1)}s</div>
+
+            {/* Live metrics - always visible */}
+            <div className="border-2 border-gray-200 bg-gray-50 p-3 md:p-4 space-y-2 mb-4 md:mb-6">
+              <div className="flex items-baseline justify-between">
+                <span className="font-mono text-[10px] text-gray-400 uppercase tracking-wider">Tokens</span>
+                <span className="font-mono text-lg md:text-2xl font-bold">{displayTokens}</span>
               </div>
-            )}
-            <p className="font-mono text-[10px] text-gray-400 mt-6 md:mt-8 uppercase tracking-widest">
+              <div className="flex items-baseline justify-between">
+                <span className="font-mono text-[10px] text-gray-400 uppercase tracking-wider">Speed</span>
+                <span className="font-mono text-lg md:text-2xl font-bold">
+                  {displaySpeed > 0 ? displaySpeed.toFixed(1) : '—'} <span className="text-xs text-gray-400">tok/s</span>
+                </span>
+              </div>
+              <div className="flex items-baseline justify-between">
+                <span className="font-mono text-[10px] text-gray-400 uppercase tracking-wider">Elapsed</span>
+                <span className="font-mono text-lg md:text-2xl font-bold">{displayElapsed.toFixed(1)}<span className="text-xs text-gray-400">s</span></span>
+              </div>
+              {displayTokens === 0 && (
+                <p className="font-mono text-[10px] text-[#ff6600] animate-pulse">Warming up GPU...</p>
+              )}
+            </div>
+
+            <p className="font-mono text-[10px] text-gray-400 uppercase tracking-widest">
               Model running on your GPU via WebGPU
             </p>
           </div>
