@@ -6,8 +6,14 @@ import * as THREE from 'three';
  * a cube pinned bottom-right, an octahedron pinned top-left.
  * Particles and light shafts spread across the full viewport.
  */
-export function SceneBackground() {
+export function SceneBackground({ paused = false }: { paused?: boolean }) {
   const mountRef = useRef<HTMLDivElement>(null);
+  const pausedRef = useRef(paused);
+  const animIdRef = useRef<number>(0);
+
+  useEffect(() => {
+    pausedRef.current = paused;
+  }, [paused]);
 
   useEffect(() => {
     const el = mountRef.current;
@@ -283,9 +289,9 @@ export function SceneBackground() {
     window.addEventListener('scroll', onScroll);
 
     // --- Animate ---
-    let animId: number;
     const animate = () => {
-      animId = requestAnimationFrame(animate);
+      animIdRef.current = requestAnimationFrame(animate);
+      if (pausedRef.current) return;
       const t = Date.now() * 0.001;
 
       // Cube: slow rotate + gentle float
@@ -337,7 +343,7 @@ export function SceneBackground() {
     animate();
 
     return () => {
-      cancelAnimationFrame(animId);
+      cancelAnimationFrame(animIdRef.current);
       window.removeEventListener('resize', onResize);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('scroll', onScroll);

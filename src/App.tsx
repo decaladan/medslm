@@ -55,7 +55,7 @@ function App() {
 
   return (
     <div className="min-h-screen p-4 md:p-6 relative">
-      <SceneBackground />
+      <SceneBackground paused={status === 'generating' || status === 'loading'} />
       <div className="max-w-6xl mx-auto relative z-10">
         {/* Top Bar */}
         <header className="flex items-center justify-between mb-4 md:mb-6 pb-3 md:pb-4 border-b-2 border-black">
